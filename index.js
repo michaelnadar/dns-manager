@@ -11,6 +11,7 @@ const cryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 // Configure AWS SDK with your credentials
+//sad
 AWS.config.update({
   region: 'us-east-1', // Update with your desired AWS region
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
