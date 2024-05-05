@@ -154,10 +154,10 @@ app.get('/allhostedzones',async(req,res) =>{
     //const responses = [];
     if (response.HostedZones && response.HostedZones.length > 0) {
       
-      res.json({ success: true,response });
+      res.status(200).json({ success: true,response });
     } else {
       console.log('No hosted zones found.');
-      res.json({success:false},'No hosted zones found');
+      res.status(200).json({success:false},'No hosted zones found');
     }
   } catch (error) {
     console.error('Error listing hosted zones:', error);
@@ -357,52 +357,6 @@ app.post('/getrecordset',async (req,res)=>{
   }
 });
 
-app.post('/updatednsrecord',async(req,res)=>{
-  try {
-    console.log(req.body);
-    // {
-    //   data: '/hostedzone/Z08595982XM4E5UOPMSPT',
-    //   Name: 'done2.in.',
-    //   Type: 'NS',
-    //   TTL: 172800,
-    //   val: [ { Value: 'hjkbafkas' }, { Value: 'bskdjfbjksd' } ]
-    // }
-    // 2001:0db8:85a3::8a2e:0370:7334 --- AAAA
-// 127.0.0.1 ----A
-// 10 mail.example.com.  ----MX
-// 10 5 5060 michealajit.in. --- SRV
-// v=spf1 ip4:192.168.0.1/16-all --- SPF
-// 10 100 "S" "SIP+D2U" "" foo.example.com. ---- NAPTR
-// 0 issue "ca.example.com" ---- CAA
-// (InvalidChangeBatch 400: RRSet of type DS with DNS name dummytest.com. is not permitted in zone dummytest.com.) -----DS
-    const oldHostedZoneId = req.body.data;
-   const parts=   oldHostedZoneId.split('/');
-   const HostedZoneId = parts[parts.length - 1];    
-
-    const params = {
-      HostedZoneId: HostedZoneId, // Replace with your hosted zone ID
-      ChangeBatch: {
-        Changes: [
-              {
-                Action: 'UPSERT', // Options: CREATE, DELETE, UPSERT
-                ResourceRecordSet: {
-                  Name: req.body.Name, // Replace with the DNS name to update
-                  Type: req.body.Type, // DNS record type (A, CNAME, etc.)
-                  TTL: req.body.TTL, // Time to live in seconds
-                  ResourceRecords: req.body.val,
-                },
-              },
-            ],
-          },
-        };
-        
-       const response = await route53.changeResourceRecordSets(params).promise();
-        
-       return res.status(200).json({success:true,response}) 
-  } catch (error) {
-    return res.status(500).json({success:false,error})
-  }
-});
 
 app.post('/creatednsrecord',async(req,res)=>{
   try {
@@ -445,14 +399,66 @@ app.post('/creatednsrecord',async(req,res)=>{
   }
 });
 
+app.post('/updatednsrecord',async(req,res)=>{
+  try {
+    console.log(req.body);
+    // {
+    //   data: '/hostedzone/Z08595982XM4E5UOPMSPT',
+    //   Name: 'done2.in.',
+    //   Type: 'NS',
+    //   TTL: 172800,
+    //   val: [ { Value: 'hjkbafkas' }, { Value: 'bskdjfbjksd' } ]
+    // }
+    const oldHostedZoneId = req.body.data;
+   const parts=   oldHostedZoneId.split('/');
+   const HostedZoneId = parts[parts.length - 1];    
+    if(req.body.final ===null){
+      return res.status(500).json({success:false},'go to dashboard and come back and refresh the page..')
+    }
+   
+   
+   const params = {
+     HostedZoneId: HostedZoneId, // Replace with your hosted zone ID
+     ChangeBatch: {
+       Changes: [
+         {
+           Action: 'UPSERT', // Options: CREATE, DELETE, UPSERT
+           ResourceRecordSet: {
+             Name: req.body.Name, // Replace with the DNS name to update
+             Type: req.body.Type, // DNS record type (A, CNAME, etc.)
+             TTL: req.body.TTL, // Time to live in seconds
+             ResourceRecords: req.body.val,
+            },
+          },
+          {
+            Action: 'DELETE', // Options: CREATE, DELETE, UPSERT
+            ResourceRecordSet: {
+              Name: req.body.final.Name, // Replace with the DNS name to update
+              Type:  req.body.final.Type, // DNS record type (A, CNAME, etc.)
+              TTL:  req.body.final.TTL, // Time to live in seconds
+              ResourceRecords:  req.body.final.ResourceRecords,
+            },
+          },
+        ],
+      },
+    };
+    
+    const response=  await route53.changeResourceRecordSets(params).promise();
+      
+        return res.status(200).json({success:true,response}) 
+        
+  } catch (error) {
+    return res.status(500).json({success:false,error})
+  }
+});
 app.post('/deleterecordset',async(req,res)=>{
 try {
     console.log(req.body)
     const data=   JSON.parse(req.body.final);
     
-      console.log(data.dataD);
-     
-      const {Name,Type,TTL,ResourceRecords} =data.dataD;
+    console.log(data.dataD);
+    
+    const {Name,Type,TTL,ResourceRecords} =data.dataD;
   const params = {
         HostedZoneId: data.hostedZone, // Replace with your hosted zone ID
         ChangeBatch: {
