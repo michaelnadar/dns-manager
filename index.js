@@ -226,7 +226,7 @@ app.post('/updatehostedzone',async(req,res)=>{
     };
     await route53.changeResourceRecordSets(changeResourceRecordSetsParams).promise();
 
-    await  axios.post('http://localhost:5000/deletehostedzone',{hostedzone:oldHostedZoneId});
+    await  axios.post('https://dns-manager-tan.vercel.app/deletehostedzone',{hostedzone:oldHostedZoneId});
 
     
     console.log('Hosted zone domain updated successfully.');
