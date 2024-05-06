@@ -6,7 +6,7 @@ const app = express();
 const port = 5000;
 const axios = require('axios');
 const mongoose =require("mongoose");
-const User = require('../User');
+const User = require('./User');
 const cryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
