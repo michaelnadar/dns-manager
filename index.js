@@ -6,7 +6,7 @@ const app = express();
 const port = 5000;
 const axios = require('axios');
 const mongoose =require("mongoose");
-const User = require('./User');
+const User = require('../User');
 const cryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -412,42 +412,67 @@ app.post('/updatednsrecord',async(req,res)=>{
     const oldHostedZoneId = req.body.data;
    const parts=   oldHostedZoneId.split('/');
    const HostedZoneId = parts[parts.length - 1];    
-    if(req.body.final ===null){
-      return res.status(500).json({success:false},'go to dashboard and come back and refresh the page..')
-    }
-   
-   
-   const params = {
-     HostedZoneId: HostedZoneId, // Replace with your hosted zone ID
-     ChangeBatch: {
-       Changes: [
-         {
-           Action: 'UPSERT', // Options: CREATE, DELETE, UPSERT
-           ResourceRecordSet: {
-             Name: req.body.Name, // Replace with the DNS name to update
-             Type: req.body.Type, // DNS record type (A, CNAME, etc.)
-             TTL: req.body.TTL, // Time to live in seconds
-             ResourceRecords: req.body.val,
+   console.log('hskla')
+   if(req.body.Type === req.body.final.Type){
+
+     
+     const params = {
+       HostedZoneId: HostedZoneId, // Replace with your hosted zone ID
+       ChangeBatch: {
+         Changes: [
+           {
+             Action: 'UPSERT', // Options: CREATE, DELETE, UPSERT
+             ResourceRecordSet: {
+               Name: req.body.Name, // Replace with the DNS name to update
+               Type: req.body.Type, // DNS record type (A, CNAME, etc.)
+               TTL: req.body.TTL, // Time to live in seconds
+               ResourceRecords: req.body.val,
+              },
             },
-          },
+          ],
+        },
+      };
+      const response=  await route53.changeResourceRecordSets(params).promise();
+      
+      return res.status(200).json({success:true,response}) 
+   }else{
+
+    const params = {
+      HostedZoneId: HostedZoneId, // Replace with your hosted zone ID
+      ChangeBatch: {
+        Changes: [
           {
-            Action: 'DELETE', // Options: CREATE, DELETE, UPSERT
+            Action: 'UPSERT', // Options: CREATE, DELETE, UPSERT
             ResourceRecordSet: {
-              Name: req.body.final.Name, // Replace with the DNS name to update
-              Type:  req.body.final.Type, // DNS record type (A, CNAME, etc.)
-              TTL:  req.body.final.TTL, // Time to live in seconds
-              ResourceRecords:  req.body.final.ResourceRecords,
-            },
-          },
-        ],
-      },
-    };
+              Name: req.body.Name, // Replace with the DNS name to update
+              Type: req.body.Type, // DNS record type (A, CNAME, etc.)
+              TTL: req.body.TTL, // Time to live in seconds
+              ResourceRecords: req.body.val,
+             },
+           },
+           {
+             Action: 'DELETE', // Options: CREATE, DELETE, UPSERT
+             ResourceRecordSet: {
+               Name: req.body.final.Name, // Replace with the DNS name to update
+               Type:  req.body.final.Type, // DNS record type (A, CNAME, etc.)
+               TTL:  req.body.final.TTL, // Time to live in seconds
+               ResourceRecords:  req.body.final.ResourceRecords,
+             },
+           },
+         ],
+       },
+     };
+     const response=  await route53.changeResourceRecordSets(params).promise();
+      
+     return res.status(200).json({success:true,response}) 
+   }
     
     const response=  await route53.changeResourceRecordSets(params).promise();
       
         return res.status(200).json({success:true,response}) 
         
   } catch (error) {
+    console.log(error);
     return res.status(500).json({success:false,error})
   }
 });
