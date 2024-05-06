@@ -413,7 +413,7 @@ app.post('/updatednsrecord',async(req,res)=>{
    const parts=   oldHostedZoneId.split('/');
    const HostedZoneId = parts[parts.length - 1];    
    console.log('hskla')
-   if(req.body.Type === req.body.final.Type){
+   if(req.body.Type === req.body.final.Type && req.body.Name === req.body.final.Name){
 
      
      const params = {
